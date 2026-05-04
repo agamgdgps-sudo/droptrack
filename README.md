@@ -37,3 +37,15 @@ Deploy steps:
 
 If you want me to convert the API to use a hosted DB (and wire up migrations), tell me which provider you prefer and I’ll implement it.
 - To enable server auth use the Login / Sync button in the UI and enter the passcode.
+
+Supabase integration (prepared)
+ - This repo includes a Supabase-ready adapter and a migration script.
+ - The API will use Supabase when the following env vars are set in Vercel or locally:
+	 - `SUPABASE_URL`
+	 - `SUPABASE_KEY` (service role or anon key depending on your table policies)
+ - To migrate existing local data to Supabase:
+	 1. Create a table named `entries` in Supabase with a `date` primary key and a JSONB column for the rest of the entry, or mirror the shape used in `server/data/db.json`.
+	 2. Set `SUPABASE_URL` and `SUPABASE_KEY` in your environment (locally or in Vercel project settings).
+	 3. Run: `node scripts/migrate-to-supabase.js`
+ - Note: you must create the `entries` table and set appropriate Row Level Security policies (or use a service key) before migration will succeed.
+# set env locally or in CI then:

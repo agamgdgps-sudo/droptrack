@@ -2,172 +2,216 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>JEE Daily Tracker</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Lobster&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DropTrack - JEE Study Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/src/css/base.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-<div class="container">
-  <h1>JEE Daily Tracker</h1>
-  <div class="quote-timer">
-    <div class="quote" id="dailyQuote"></div>
-    <div class="timer" id="countdownTimer"></div>
-  </div>
-
-  <div style="display:flex; justify-content:center; gap:8px; margin-bottom:12px;">
-    <button id="darkModeToggle" class="muted">Toggle Dark Mode</button>
-    <button id="loginBtn" class="primary">Login / Sync</button>
-    <button id="logoutBtn" class="muted">Logout</button>
-  </div>
-
-  <!-- Simple login modal -->
-  <div id="loginModal" class="modal" aria-hidden="true">
-    <div class="modal-content">
-      <h3>Enter Passcode</h3>
-      <input id="passcodeInput" type="password" />
-      <div style="margin-top:12px; display:flex; gap:8px; justify-content:center;">
-        <button id="loginSubmit" class="primary">Login</button>
-        <button id="loginCancel" class="muted">Cancel</button>
+<div class="app">
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <h1>DropTrack</h1>
+      </div>
+      <div class="header-actions">
+        <button id="darkModeToggle" class="btn-icon" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+        <button id="exportCsv" class="btn-secondary">Export</button>
+        <label class="btn-secondary" for="importFile">Import</label>
+        <input id="importFile" type="file" accept="text/csv" style="display:none" />
       </div>
     </div>
-  </div>
+  </header>
 
-  <!-- Merge modal -->
-  <div id="mergeModal" class="modal" aria-hidden="true">
-    <div class="modal-content">
-      <h3>Sync Conflict</h3>
-      <p>Your local data and server data differ. Choose how to proceed:</p>
-      <div style="display:flex; gap:8px; justify-content:center; margin-top:12px;">
-        <button id="mergeUpload" class="primary">Upload Local → Server</button>
-        <button id="mergeReplace" class="muted">Use Server → Local</button>
-        <button id="mergeCancel" class="muted">Cancel Login</button>
+  <main class="main-content">
+    <div class="container-centered">
+      <!-- Hero / Stats Section -->
+      <section class="hero-section">
+        <div class="quote-box">
+          <div class="quote-text" id="dailyQuote">Loading quote...</div>
+          <div class="timer-text" id="countdownTimer">Calculating days...</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Entries</div>
+            <div class="stat-value" id="totalEntries">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Study Hours</div>
+            <div class="stat-value" id="totalTime">0</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tabs Navigation -->
+      <nav class="tab-nav">
+        <button class="tab-btn active" data-target="daily" onclick="showTab('daily')">Daily</button>
+        <button class="tab-btn" data-target="weekly" onclick="showTab('weekly')">Weekly</button>
+        <button class="tab-btn" data-target="monthly" onclick="showTab('monthly')">Monthly</button>
+      </nav>
+
+      <!-- Daily Tab -->
+      <div id="daily" class="tab-content active">
+        <section class="form-section">
+          <h2>Log Today's Study Session</h2>
+          <form id="entryForm" class="study-form">
+            <div class="form-group">
+              <label for="date">Date</label>
+              <input type="date" id="date" required>
+            </div>
+
+            <div class="subjects-grid">
+              <div class="subject-block">
+                <h3>Physics</h3>
+                <div class="form-group">
+                  <label for="physicsAttempted">Questions Attempted</label>
+                  <input type="number" id="physicsAttempted" min="0" placeholder="0">
+                </div>
+                <div class="form-group">
+                  <label for="physicsCorrect">Correct</label>
+                  <input type="number" id="physicsCorrect" min="0" placeholder="0">
+                </div>
+                <div class="form-group">
+                  <label for="physicsTime">Time (hrs)</label>
+                  <input type="number" id="physicsTime" step="0.5" min="0" placeholder="0">
+                </div>
+              </div>
+
+              <div class="subject-block">
+                <h3>Chemistry</h3>
+                <div class="form-group">
+                  <label for="chemistryAttempted">Questions Attempted</label>
+                  <input type="number" id="chemistryAttempted" min="0" placeholder="0">
+                </div>
+                <div class="form-group">
+                  <label for="chemistryCorrect">Correct</label>
+                  <input type="number" id="chemistryCorrect" min="0" placeholder="0">
+                </div>
+                <div class="form-group">
+                  <label for="chemistryTime">Time (hrs)</label>
+                  <input type="number" id="chemistryTime" step="0.5" min="0" placeholder="0">
+                </div>
+              </div>
+
+              <div class="subject-block">
+                <h3>Mathematics</h3>
+                <div class="form-group">
+                  <label for="mathAttempted">Questions Attempted</label>
+                  <input type="number" id="mathAttempted" min="0" placeholder="0">
+                </div>
+                <div class="form-group">
+                  <label for="mathCorrect">Correct</label>
+                  <input type="number" id="mathCorrect" min="0" placeholder="0">
+                </div>
+                <div class="form-group">
+                  <label for="mathTime">Time (hrs)</label>
+                  <input type="number" id="mathTime" step="0.5" min="0" placeholder="0">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="topics">Topics Covered</label>
+              <textarea id="topics" placeholder="Enter topics you studied today..." rows="3"></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">Save Entry</button>
+              <button type="button" class="btn-secondary" onclick="clearForm()">Clear</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="entries-section">
+          <h2>Study History</h2>
+          <div class="table-wrapper">
+            <table id="entriesTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Physics</th>
+                  <th>Chemistry</th>
+                  <th>Math</th>
+                  <th>Total Hours</th>
+                  <th>Topics</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="stats-section">
+          <h2>Performance Summary</h2>
+          <div class="stats-container">
+            <div class="stat-panel">
+              <h3>Subject Stats</h3>
+              <div id="subjectStats" class="stats-list">
+                <p id="physicsStats">Physics: —</p>
+                <p id="chemistryStats">Chemistry: —</p>
+                <p id="mathStats">Math: —</p>
+              </div>
+            </div>
+            <div class="stat-panel chart-panel">
+              <h3>Questions Distribution</h3>
+              <canvas id="questionsChart"></canvas>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Weekly Tab -->
+      <div id="weekly" class="tab-content">
+        <section class="stats-section">
+          <h2>Weekly Summary</h2>
+          <div class="stats-container">
+            <div class="stat-panel">
+              <div id="weekStats" class="stats-list">
+                <p id="weekEntries">Total Sessions: —</p>
+                <p id="weekPhysics">Physics: —</p>
+                <p id="weekChemistry">Chemistry: —</p>
+                <p id="weekMath">Math: —</p>
+                <p id="weekTotalTime">Total Hours: —</p>
+                <p id="weekAvgQuestions">Avg Questions: —</p>
+              </div>
+            </div>
+            <div class="stat-panel chart-panel">
+              <h3>Weekly Progress</h3>
+              <canvas id="weeklyChart"></canvas>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Monthly Tab -->
+      <div id="monthly" class="tab-content">
+        <section class="stats-section">
+          <h2>Monthly Summary</h2>
+          <div class="stats-container">
+            <div class="stat-panel">
+              <div id="monthStats" class="stats-list">
+                <p id="monthEntries">Total Sessions: —</p>
+                <p id="monthPhysics">Physics: —</p>
+                <p id="monthChemistry">Chemistry: —</p>
+                <p id="monthMath">Math: —</p>
+                <p id="monthTotalTime">Total Hours: —</p>
+                <p id="monthAvgQuestions">Avg Questions: —</p>
+              </div>
+            </div>
+            <div class="stat-panel chart-panel">
+              <h3>Monthly Progress</h3>
+              <canvas id="monthlyChart"></canvas>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
-  </div>
-
-  <div class="tabs">
-    <button class="tab-button active" data-target="daily" onclick="showTab('daily')">Daily</button>
-    <button class="tab-button" data-target="weekly" onclick="showTab('weekly')">Weekly</button>
-    <button class="tab-button" data-target="monthly" onclick="showTab('monthly')">Monthly</button>
-  </div>
-
-  <div id="daily" class="tab-content active">
-  <h2>Add Today's Entry</h2>
-  <form id="entryForm">
-    <label>Date: <input type="date" id="date" required></label><br><br>
-    <table>
-      <tr>
-        <th>Subject</th>
-        <th>Questions Attempted</th>
-        <th>Correct</th>
-        <th>Time Spent (hrs)</th>
-      </tr>
-      <tr>
-        <td>Physics</td>
-        <td><input type="number" id="physicsAttempted" min="0"></td>
-        <td><input type="number" id="physicsCorrect" min="0"></td>
-        <td><input type="number" id="physicsTime" step="0.5" min="0"></td>
-      </tr>
-      <tr>
-        <td>Chemistry</td>
-        <td><input type="number" id="chemistryAttempted" min="0"></td>
-        <td><input type="number" id="chemistryCorrect" min="0"></td>
-        <td><input type="number" id="chemistryTime" step="0.5" min="0"></td>
-      </tr>
-      <tr>
-        <td>Math</td>
-        <td><input type="number" id="mathAttempted" min="0"></td>
-        <td><input type="number" id="mathCorrect" min="0"></td>
-        <td><input type="number" id="mathTime" step="0.5" min="0"></td>
-      </tr>
-    </table>
-    <br>
-    <label>Topics Covered: <textarea id="topics"></textarea></label><br><br>
-    <button type="submit">Save Entry</button>
-    <button type="button" onclick="clearForm()">Clear</button>
-  </form>
-
-  <h2>Entries</h2>
-  <div class="table-wrapper">
-    <table id="entriesTable">
-    <tr>
-      <th>Date</th>
-      <th>Physics (Att/Corr/Time)</th>
-      <th>Chemistry (Att/Corr/Time)</th>
-      <th>Math (Att/Corr/Time)</th>
-      <th>Total Time (hrs)</th>
-      <th>Topics</th>
-      <th>Actions</th>
-    </tr>
-  </table>
-  </div>
-
-  <div class="stats">
-    <div class="stat-item">
-      <h3>Overall Statistics</h3>
-      <p id="totalEntries"></p>
-      <p id="physicsStats"></p>
-      <p id="chemistryStats"></p>
-      <p id="mathStats"></p>
-      <p id="totalTime"></p>
-    </div>
-    <div class="stat-item">
-      <h3>Questions Distribution</h3>
-      <canvas id="questionsChart"></canvas>
-    </div>
-  </div>
-  </div>
-
-<div id="weekly" class="tab-content">
-  <h2>Weekly Summary</h2>
-  <div class="stats">
-    <div class="stat-item">
-      <h3>This Week's Stats</h3>
-      <p id="weekEntries"></p>
-      <p id="weekPhysics"></p>
-      <p id="weekChemistry"></p>
-      <p id="weekMath"></p>
-      <p id="weekTotalTime"></p>
-      <p id="weekAvgQuestions"></p>
-    </div>
-    <div class="stat-item">
-      <h3>Weekly Progress</h3>
-      <canvas id="weeklyChart"></canvas>
-    </div>
-  </div>
-  </div>
-
-<div id="monthly" class="tab-content">
-  <h2>Monthly Summary</h2>
-  <div class="stats">
-    <div class="stat-item">
-      <h3>This Month's Stats</h3>
-      <p id="monthEntries"></p>
-      <p id="monthPhysics"></p>
-      <p id="monthChemistry"></p>
-      <p id="monthMath"></p>
-      <p id="monthTotalTime"></p>
-      <p id="monthAvgQuestions"></p>
-    </div>
-    <div class="stat-item">
-      <h3>Monthly Progress</h3>
-      <canvas id="monthlyChart"></canvas>
-    </div>
-  </div>
-  </div>
-
-  <script type="module" src="/src/js/app.js"></script>
-  <script>
-    // modal behavior: hook cancel and toggle classes
-    const loginModalEl = document.getElementById('loginModal');
-    const loginCancel = document.getElementById('loginCancel');
-    if (loginCancel && loginModalEl) loginCancel.addEventListener('click', () => { loginModalEl.classList.remove('show'); });
-    const loginBtnEl = document.getElementById('loginBtn');
-    if (loginBtnEl && loginModalEl) loginBtnEl.addEventListener('click', () => { loginModalEl.classList.add('show'); });
-    const logoutBtnEl = document.getElementById('logoutBtn');
-    if (logoutBtnEl) logoutBtnEl.addEventListener('click', () => { /* handled by auth.js */ });
-  </script>
+  </main>
 </div>
+
+<script type="module" src="/src/js/app.js"></script>
 </body>
 </html>

@@ -1,6 +1,5 @@
 import '/src/css/base.css'
 import { storage } from './storage.js'
-import { initAuth } from './auth.js'
 
 // Ensure Chart.js is available globally via CDN script in index.html
 
@@ -265,11 +264,102 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (darkModeToggle) darkModeToggle.addEventListener('click', () => { const isDark = !body.classList.contains('dark-mode'); applyDarkMode(isDark); });
 
   const form = document.getElementById('entryForm'); if (form) form.addEventListener('submit', saveEntry);
-  // Init auth UI and storage sync
-  initAuth(storage, async (mode) => {
-    // mode changed (local/remote) — reload entries from storage
-    entries = await storage.getAll();
-    renderTable(); renderStats();
-  });
   renderTable(); renderStats();
+
+  // mini chart in sidebar
+  (function initMiniChart(){
+    const mini = document.getElementById('miniChart');
+    if (!mini || typeof Chart === 'undefined') return;
+    try {
+      const ctx = mini.getContext('2d');
+      new Chart(ctx, { type: 'doughnut', data: { labels: ['P','C','M'], datasets:[{ data:[1,1,1], backgroundColor:['#FF6384','#36A2EB','#FFCE56'] }] }, options:{ cutout: '70%', plugins:{ legend:{ display:false } }, responsive:true } });
+    } catch(e){ /* ignore */ }
+  })();
+
+  // FAB to add entry: open modal and focus date
+  const addFab = document.getElementById('addEntryFab');
+  if (addFab) addFab.addEventListener('click', () => {
+    const loginModalEl = document.getElementById('loginModal');
+    if (loginModalEl) {
+      loginModalEl.classList.add('show');
+      const d = document.getElementById('date'); if (d) d.focus();
+    }
+  });
+
+  // Toast helper
+  function showToast(msg, timeout = 2500) {
+    let t = document.querySelector('.toast');
+    if (!t) { t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._timeout);
+    t._timeout = setTimeout(() => t.classList.remove('show'), timeout);
+  }
+
+  // CSV Export
+  const exportBtn = document.getElementById('exportCsv');
+  if (exportBtn) exportBtn.addEventListener('click', () => {
+    if (!entries || entries.length === 0) { showToast('No entries to export'); return; }
+    const headers = ['date','physics_attempted','physics_correct','physics_time','chemistry_attempted','chemistry_correct','chemistry_time','math_attempted','math_correct','math_time','topics'];
+    const rows = entries.map(e => [
+      e.date,
+      e.subjects.physics.attempted || 0,
+      e.subjects.physics.correct || 0,
+      e.subjects.physics.time || 0,
+      e.subjects.chemistry.attempted || 0,
+      e.subjects.chemistry.correct || 0,
+      e.subjects.chemistry.time || 0,
+      e.subjects.math.attempted || 0,
+      e.subjects.math.correct || 0,
+      e.subjects.math.time || 0,
+      '"' + (e.topics || '').replace(/"/g,'""') + '"'
+    ].join(','));
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `droptrack-${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    showToast('CSV exported');
+  });
+
+  // CSV Import
+  const importFile = document.getElementById('importFile');
+  if (importFile) importFile.addEventListener('change', async (ev) => {
+    const f = ev.target.files && ev.target.files[0]; if (!f) return;
+    const txt = await f.text();
+    const lines = txt.split(/\r?\n/).filter(Boolean);
+    if (lines.length < 2) { showToast('CSV has no data'); return; }
+    const header = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const parsed = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(',');
+      if (cols.length < header.length) continue;
+      const obj = { date: cols[header.indexOf('date')] };
+      const p = {
+        physics: { attempted: parseInt(cols[header.indexOf('physics_attempted')]||0)||0, correct: parseInt(cols[header.indexOf('physics_correct')]||0)||0, time: parseFloat(cols[header.indexOf('physics_time')]||0)||0 },
+        chemistry: { attempted: parseInt(cols[header.indexOf('chemistry_attempted')]||0)||0, correct: parseInt(cols[header.indexOf('chemistry_correct')]||0)||0, time: parseFloat(cols[header.indexOf('chemistry_time')]||0)||0 },
+        math: { attempted: parseInt(cols[header.indexOf('math_attempted')]||0)||0, correct: parseInt(cols[header.indexOf('math_correct')]||0)||0, time: parseFloat(cols[header.indexOf('math_time')]||0)||0 }
+      };
+      obj.subjects = p;
+      const topicsIdx = header.indexOf('topics');
+      if (topicsIdx >= 0) obj.topics = cols[topicsIdx].replace(/^"|"$/g,'').replace(/""/g,'"'); else obj.topics = '';
+      parsed.push(obj);
+    }
+    if (parsed.length === 0) { showToast('No valid rows found'); return; }
+    // merge: replace existing dates
+    let added = 0, replaced = 0;
+    for (const entry of parsed) {
+      const idx = entries.findIndex(e => e.date === entry.date);
+      if (idx >= 0) { entries[idx] = entry; replaced++; } else { entries.push(entry); added++; }
+    }
+    await storage.saveAll(entries);
+    renderTable(); renderStats();
+    showToast(`Imported ${parsed.length} rows (${added} added, ${replaced} updated)`);
+    importFile.value = '';
+  });
+
+  // enhance table rendering with animations
+  const origRenderTable = renderTable;
+  renderTable = function() {
+    origRenderTable();
+    document.querySelectorAll('#entriesTable tr').forEach((r, i) => { if (i>0) r.classList.add('fade-in'); setTimeout(()=>{ r.classList.remove('fade-in'); }, 600); });
+  }
 });
